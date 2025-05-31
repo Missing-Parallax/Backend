@@ -7,24 +7,24 @@ import { json } from "express";
 
 const registerUser = asyncHandler(async (req, res) => {
   //get user details
-  const { fullname, username, email, password } = req.body;
+  const { fullName, username, email, password } = req.body;
 
-  //validation
-  if (fullname.trim() === "") {
+  // Validation
+  if (typeof fullName === "undefined" || fullName.trim() === "") {
     throw new ApiError(400, "Fullname is required");
   }
-  if (email.trim() === "") {
+  if (typeof email === "undefined" || email.trim() === "") {
     throw new ApiError(400, "Email is required");
   }
-  if (username.trim() === "") {
+  if (typeof username === "undefined" || username.trim() === "") {
     throw new ApiError(400, "Username is required");
   }
-  if (password.trim() === "") {
+  if (typeof password === "undefined" || password.trim() === "") {
     throw new ApiError(400, "Password is required");
   }
 
   //check if user already exists -> email and username
-  const existedUser = User.findOne({
+  const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
 
@@ -33,7 +33,7 @@ const registerUser = asyncHandler(async (req, res) => {
   //check for images, check for avatar
 
   const avatarLocalpath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
 
   if (!avatarLocalpath) throw new ApiError(400, "Avatar is required");
 
@@ -46,12 +46,12 @@ const registerUser = asyncHandler(async (req, res) => {
   //create user object - entry in db
 
   const user = await User.create({
-    username: username.toLowercase(),
+    username: username.toLowerCase(),
     avatar: avatar.url,
     email,
     password,
     coverImage: coverImage?.url || "",
-    fullname,
+    fullName,
   });
 
   //check for user creation and remove password and refresh token in response
@@ -65,7 +65,7 @@ const registerUser = asyncHandler(async (req, res) => {
   //return res
   return res
     .status(201)
-    .json(new ApiResponse(200, registerUser, "User registered successfully"));
+    .json(new ApiResponse(200, createdUser, "User registered successfully"));
 });
 
 export { registerUser };
